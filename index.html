@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#000000">
+    <meta name="description" content="Professional Camera Filter App with AR Filters">
+    <title>FilterCam Pro — AR Camera Filters</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="manifest" href="data:application/json,{%22name%22:%22FilterCam%20Pro%22,%22short_name%22:%22FilterCam%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23000000%22,%22theme_color%22:%22%23000000%22}">
+</head>
+<body>
+
+    <!-- ===== LOADING SCREEN ===== -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <div class="logo-ring">
+                    <div class="logo-ring-inner"></div>
+                </div>
+                <span class="logo-icon">📸</span>
+            </div>
+            <h1 class="loading-title">FilterCam Pro</h1>
+            <p class="loading-subtitle">Initializing AR Engine...</p>
+            <div class="loading-bar-container">
+                <div class="loading-bar" id="loadingBar"></div>
+            </div>
+            <p class="loading-status" id="loadingStatus">Requesting camera access...</p>
+        </div>
+    </div>
+
+    <!-- ===== PERMISSION SCREEN ===== -->
+    <div id="permissionScreen" class="permission-screen hidden">
+        <div class="permission-content">
+            <div class="permission-icon-wrapper">
+                <div class="permission-pulse"></div>
+                <div class="permission-icon">📷</div>
+            </div>
+            <h2 class="permission-title">Camera Access Required</h2>
+            <p class="permission-text">
+                FilterCam Pro needs access to your camera to apply AR filters. 
+                Your photos stay on your device — nothing is uploaded.
+            </p>
+            <button class="btn-permission" id="btnGrantPermission">
+                <span class="btn-icon">🎬</span>
+                <span>Enable Camera</span>
+            </button>
+            <p class="permission-hint">Tap the button and allow camera access</p>
+        </div>
+    </div>
+
+    <!-- ===== MAIN CAMERA SCREEN ===== -->
+    <div id="cameraScreen" class="camera-screen hidden">
+
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="top-bar-left">
+                <button class="icon-btn" id="btnFlash" title="Flash">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+                    </svg>
+                    <span class="icon-btn-label">Off</span>
+                </button>
+            </div>
+            <div class="top-bar-center">
+                <div class="recording-indicator hidden" id="recordingIndicator">
+                    <span class="rec-dot"></span>
+                    <span class="rec-text">REC</span>
+                </div>
+            </div>
+            <div class="top-bar-right">
+                <button class="icon-btn" id="btnFlipCamera" title="Flip Camera">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M20 7l-4-4-4 4"/>
+                        <path d="M16 3v10"/>
+                        <path d="M4 17l4 4 4-4"/>
+                        <path d="M8 21V11"/>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="btnSettings" title="Settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Camera Canvas Container -->
+        <div class="canvas-container" id="canvasContainer">
+            <canvas id="deepARCanvas"></canvas>
+            <video id="cameraVideo" autoplay playsinline muted></video>
+            
+            <!-- Face Guide -->
+            <div class="face-guide hidden" id="faceGuide">
+                <svg viewBox="0 0 200 260" fill="none">
+                    <ellipse cx="100" cy="120" rx="80" ry="110" stroke="rgba(255,255,255,0.3)" stroke-width="2" stroke-dasharray="8 6"/>
+                    <circle cx="70" cy="100" r="5" fill="rgba(255,255,255,0.2)"/>
+                    <circle cx="130" cy="100" r="5" fill="rgba(255,255,255,0.2)"/>
+                    <ellipse cx="100" cy="150" rx="15" ry="8" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+                </svg>
+                <p class="face-guide-text">Position your face here</p>
+            </div>
+
+            <!-- Filter Name Toast -->
+            <div class="filter-toast hidden" id="filterToast">
+                <span class="filter-toast-icon" id="filterToastIcon">✨</span>
+                <span class="filter-toast-name" id="filterToastName">No Filter</span>
+            </div>
+
+            <!-- Zoom Indicator -->
+            <div class="zoom-indicator hidden" id="zoomIndicator">
+                <span id="zoomLevel">1.0x</span>
+            </div>
+        </div>
+
+        <!-- Bottom Controls Section -->
+        <div class="bottom-section">
+
+            <!-- Filter Carousel -->
+            <div class="filter-carousel-wrapper">
+                <div class="filter-carousel" id="filterCarousel">
+                    <!-- Filters will be injected by JS -->
+                </div>
+                <div class="carousel-fade carousel-fade-left"></div>
+                <div class="carousel-fade carousel-fade-right"></div>
+            </div>
+
+            <!-- Filter Category Tabs -->
+            <div class="filter-tabs" id="filterTabs">
+                <button class="filter-tab active" data-category="face">Face</button>
+                <button class="filter-tab" data-category="color">Color</button>
+                <button class="filter-tab" data-category="beauty">Beauty</button>
+                <button class="filter-tab" data-category="fun">Fun</button>
+                <button class="filter-tab" data-category="artistic">Art</button>
+            </div>
+
+            <!-- Main Action Bar -->
+            <div class="action-bar">
+                <div class="action-bar-left">
+                    <button class="gallery-btn" id="btnGallery" title="Gallery">
+                        <div class="gallery-preview" id="galleryPreview">
+                            <img id="lastPhotoThumb" src="" alt="" class="hidden">
+                            <div class="gallery-placeholder" id="galleryPlaceholder">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <path d="M21 15l-5-5L5 21"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <span class="gallery-count hidden" id="galleryCount">0</span>
+                    </button>
+                </div>
+
+                <div class="action-bar-center">
+                    <button class="capture-btn" id="btnCapture" title="Capture Photo">
+                        <div class="capture-btn-outer">
+                            <div class="capture-btn-inner"></div>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="action-bar-right">
+                    <button class="icon-btn mode-btn" id="btnBeautyMode" title="Beauty Mode">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Safe Area Spacer for iOS -->
+            <div class="safe-area-bottom"></div>
+        </div>
+    </div>
+
+    <!-- ===== PREVIEW SCREEN ===== -->
+    <div id="previewScreen" class="preview-screen hidden">
+        <div class="preview-container">
+            <img id="previewImage" src="" alt="Captured Photo" class="preview-image">
+            
+            <!-- Preview Top Bar -->
+            <div class="preview-top-bar">
+                <button class="preview-icon-btn" id="btnPreviewClose">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+                <div class="preview-filter-badge" id="previewFilterBadge">
+                    <span id="previewFilterName">No Filter</span>
+                </div>
+            </div>
+
+            <!-- Preview Edit Tools -->
+            <div class="preview-edit-tools">
+                <button class="edit-tool-btn" id="btnCrop" title="Crop">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6.13 1L6 16a2 2 0 002 2h15"/>
+                        <path d="M1 6.13L16 6a2 2 0 012 2v15"/>
+                    </svg>
+                    <span>Crop</span>
+                </button>
+                <button class="edit-tool-btn" id="btnText" title="Text">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 7 4 4 20 4 20 7"/>
+                        <line x1="9" y1="20" x2="15" y2="20"/>
+                        <line x1="12" y1="4" x2="12" y2="20"/>
+                    </svg>
+                    <span>Text</span>
+                </button>
+                <button class="edit-tool-btn" id="btnDraw" title="Draw">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                        <path d="M2 2l7.586 7.586"/>
+                        <circle cx="11" cy="11" r="2"/>
+                    </svg>
+                    <span>Draw</span>
+                </button>
+                <button class="edit-tool-btn" id="btnSticker" title="Sticker">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                        <line x1="9" y1="9" x2="9.01" y2="9"/>
+                        <line x1="15" y1="9" x2="15.01" y2="9"/>
+                    </svg>
+                    <span>Sticker</span>
+                </button>
+            </div>
+
+            <!-- Preview Bottom Actions -->
+            <div class="preview-bottom">
+                <button class="preview-action-btn btn-retake" id="btnRetake">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="1 4 1 10 7 10"/>
+                        <path d="M3.51 15a9 9 0 102.13-9.36L1 10"/>
+                    </svg>
+                    <span>Retake</span>
+                </button>
+
+                <button class="preview-action-btn btn-share" id="btnShare">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="18" cy="5" r="3"/>
+                        <circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                    <span>Share</span>
+                </button>
+
+                <button class="preview-action-btn btn-save" id="btnSave">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    <span>Save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== GALLERY MODAL ===== -->
+    <div id="galleryModal" class="gallery-modal hidden">
+        <div class="gallery-modal-header">
+            <button class="gallery-modal-close" id="btnCloseGallery">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <line x1="18" y1="6" x2="6" y2="18"/>
+                    <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+            </button>
+            <h2 class="gallery-modal-title">Your Photos</h2>
+            <button class="gallery-modal-action" id="btnClearGallery">Clear All</button>
+        </div>
+        <div class="gallery-modal-grid" id="galleryGrid">
+            <!-- Photos will be injected by JS -->
+        </div>
+        <div class="gallery-empty hidden" id="galleryEmpty">
+            <div class="gallery-empty-icon">📷</div>
+            <p>No photos yet</p>
+            <span>Take your first photo!</span>
+        </div>
+    </div>
+
+    <!-- ===== SETTINGS MODAL ===== -->
+    <div id="settingsModal" class="settings-modal hidden">
+        <div class="settings-modal-content">
+            <div class="settings-header">
+                <h2>Settings</h2>
+                <button class="settings-close" id="btnCloseSettings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="settings-body">
+                <div class="settings-group">
+                    <h3 class="settings-group-title">Camera</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Resolution</span>
+                            <span class="setting-desc">Photo capture quality</span>
+                        </div>
+                        <select class="setting-select" id="settingResolution">
+                            <option value="hd">HD (720p)</option>
+                            <option value="fhd" selected>Full HD (1080p)</option>
+                            <option value="qhd">QHD (1440p)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Mirror Selfie</span>
+                            <span class="setting-desc">Flip front camera image</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="settingMirror" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Grid Lines</span>
+                            <span class="setting-desc">Show composition grid</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="settingGrid">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Timer</span>
+                            <span class="setting-desc">Capture delay</span>
+                        </div>
+                        <select class="setting-select" id="settingTimer">
+                            <option value="0" selected>Off</option>
+                            <option value="3">3 seconds</option>
+                            <option value="5">5 seconds</option>
+                            <option value="10">10 seconds</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3 class="settings-group-title">Filters</h3>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <span class="setting-label">Show Face Guide</span>
+                            <span class="setting-desc">Display face positioning guide</span>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="settingFaceGuide">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                <div class="settings-group">
+                    <h3 class="settings-group-title">About</h3>
+                    <div class="about-info">
+                        <p class="app-version">FilterCam Pro v2.0</p>
+                        <p class="app-credit">Built with DeepAR SDK</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TIMER OVERLAY ===== -->
+    <div id="timerOverlay" class="timer-overlay hidden">
+        <span class="timer-count" id="timerCount">3</span>
+    </div>
+
+    <!-- ===== FLASH OVERLAY ===== -->
+    <div id="flashOverlay" class="flash-overlay"></div>
+
+    <!-- ===== GRID OVERLAY ===== -->
+    <div id="gridOverlay" class="grid-overlay hidden">
+        <div class="grid-line grid-h1"></div>
+        <div class="grid-line grid-h2"></div>
+        <div class="grid-line grid-v1"></div>
+        <div class="grid-line grid-v2"></div>
+    </div>
+
+    <!-- ===== TOAST NOTIFICATION ===== -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- DeepAR SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/deepar@5.6.4/js/deepar.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
