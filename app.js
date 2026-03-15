@@ -13,7 +13,7 @@
 const CONFIG = {
     // ⚠️ REPLACE THIS with your actual DeepAR license key
     // Get one free at: https://developer.deepar.ai
-    DEEPAR_LICENSE_KEY: 'YOUR_DEEPAR_LICENSE_KEY_HERE',
+    DEEPAR_LICENSE_KEY: 'fbb385913d12cbbbc760eb9ee2439154561fcaa337275701741c2bd2a0f8de87bbc9ec44290de174',
 
     // DeepAR model/effect paths (hosted by DeepAR CDN)
     DEEPAR_EFFECTS_BASE: 'https://cdn.jsdelivr.net/npm/deepar@5.6.4/effects/',
