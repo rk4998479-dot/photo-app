@@ -141,6 +141,20 @@
             </div>
 
             <!-- Main Action Bar -->
+            <div id="beauty-scroll-menu" style="display: flex; overflow-x: auto; gap: 15px; padding: 10px; justify-content: center; background: rgba(0,0,0,0.5); border-radius: 20px; margin: 10px;">
+    <div class="filter-item" onclick="setBeautyMode('none')" style="cursor:pointer; text-align:center; flex-shrink:0;">
+        <div style="width:60px; height:60px; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.1); font-size:24px;">🚫</div>
+        <span style="color:white; display:block; margin-top:5px; font-size:11px;">Normal</span>
+    </div>
+    <div class="filter-item" onclick="setBeautyMode('soft_glow')" style="cursor:pointer; text-align:center; flex-shrink:0;">
+        <div style="width:60px; height:60px; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.1); font-size:24px;">✨</div>
+        <span style="color:white; display:block; margin-top:5px; font-size:11px;">Soft Glow</span>
+    </div>
+    <div class="filter-item" onclick="setBeautyMode('insta_white')" style="cursor:pointer; text-align:center; flex-shrink:0;">
+        <div style="width:60px; height:60px; border-radius:50%; border:2px solid #fff; display:flex; align-items:center; justify-content:center; background:rgba(255,255,255,0.1); font-size:24px;">📸</div>
+        <span style="color:white; display:block; margin-top:5px; font-size:11px;">Insta White</span>
+    </div>
+</div>
             <div class="action-bar">
                 <div class="action-bar-left">
                     <button class="gallery-btn" id="btnGallery" title="Gallery">
@@ -395,5 +409,58 @@
     <!-- DeepAR SDK -->
     <script src="https://cdn.jsdelivr.net/npm/deepar@5.6.4/js/deepar.js"></script>
     <script src="app.js"></script>
+    <script>
+// 1. Beauty Filter ka status check karne ke liye variable
+let activeBeautyFilter = 'none';
+
+// 2. Buttons par click karne par ye function chalega
+window.setBeautyMode = function(mode) {
+    activeBeautyFilter = mode;
+    console.log("Filter badla gaya: " + mode);
+    
+    // Aapke 4GB RAM system par load na bade isliye hum 
+    // sirf capture ke waqt filter apply karenge.
+    if(mode !== 'none') {
+        alert(mode + " filter set ho gaya hai! Ab photo khichein.");
+    }
+};
+
+// 3. Photo click karne wala function (Professional Beauty Effects)
+window.capturePhoto = function() {
+    const video = document.querySelector('video');
+    const canvas = document.createElement('canvas');
+    
+    if (!video) {
+        alert("Camera nahi mil raha!");
+        return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+
+    // Video se frame capture karein
+    ctx.drawImage(video, 0, 0);
+
+    // Instagram jaisi 'Khubsurti' (Beauty Filter) apply karein
+    if (activeBeautyFilter === 'soft_glow') {
+        // Halka glow aur skin smoothing effect
+        ctx.filter = 'brightness(1.1) saturate(1.1) blur(0.3px)';
+    } else if (activeBeautyFilter === 'insta_white') {
+        // Jyada brightness aur saaf face ke liye
+        ctx.filter = 'brightness(1.25) contrast(1.1)';
+    }
+    
+    // Filter ke saath image firse draw karein
+    ctx.drawImage(canvas, 0, 0);
+    
+    // Photo ko turant download/save karein
+    const dataURL = canvas.toDataURL('image/png');
+    const link = document.createElement('a');
+    link.href = dataURL;
+    link.download = 'RK_Beauty_Camera_' + Date.now() + '.png';
+    link.click();
+};
+</script>
 </body>
 </html>
